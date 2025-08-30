@@ -1,12 +1,12 @@
 import logging
 import random
 import asyncio
-import aiohttp
+import requests
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 # ===== НАСТРОЙКИ =====
-TOKEN = "88268250061:AAEAVFkU47ISRsKYpJ4IjKlpcrGEXyJxd3Y"
+TOKEN =  "88268250061:AAEAVFkU47ISRsKYpJ4IjKlpcrGEXyJxd3Y"  # Убедитесь, что токен правильный!
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -97,12 +97,12 @@ async def self_ping():
             # Получаем URL приложения из переменных окружения Render
             render_url = "https://your-bot-name.onrender.com"  # Замените на ваш URL
             
-            async with aiohttp.ClientSession() as session:
-                async with session.get(render_url) as response:
-                    if response.status == 200:
-                        logger.info("Самопинг успешен")
-                    else:
-                        logger.warning(f"Самопинг неуспешен: {response.status}")
+            # Используем синхронный requests в отдельном потоке
+            response = requests.get(render_url, timeout=10)
+            if response.status_code == 200:
+                logger.info("Самопинг успешен")
+            else:
+                logger.warning(f"Самопинг неуспешен: {response.status_code}")
         except Exception as e:
             logger.error(f"Ошибка самопинга: {e}")
         
@@ -427,17 +427,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 def main():
+    # Создаем новый цикл событий
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     application = Application.builder().token(TOKEN).build()
     
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     # Запускаем самопинг в фоновом режиме
-    asyncio.get_event_loop().create_task(self_ping())
+    loop.create_task(self_ping())
     
     logger.info("Бот запущен...")
-    application.run_polling()
+    
+    try:
+        application.run_polling()
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен")
+    finally:
+        loop.close()
 
 if __name__ == "__main__":
-
     main()
