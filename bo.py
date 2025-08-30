@@ -2,11 +2,14 @@ import logging
 import random
 import asyncio
 import requests
+import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 # ===== НАСТРОЙКИ =====
-TOKEN =  "8268250061:AAEAVFkU47ISRsKYpJ4IjKlpcrGEXyJxd3Y"  # Убедитесь, что токен правильный!
+TOKEN = os.getenv('BOT_TOKEN', '8268250061:AAEAVFkU47ISRsKYpJ4IjKlpcrGEXyJxd3Y')
+RENDER_URL = os.getenv('RENDER_URL', 'https://ayt-2.onrender.com')
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -94,20 +97,24 @@ async def self_ping():
     """Функция для самопинга, чтобы приложение не засыпало на Render"""
     while True:
         try:
-            # Получаем URL приложения из переменных окружения Render
-            render_url = "https://your-bot-name.onrender.com"  # Замените на ваш URL
+            # Пытаемся отправить запрос к нашему приложению
+            response = requests.get(RENDER_URL, timeout=10)
             
-            # Используем синхронный requests в отдельном потоке
-            response = requests.get(render_url, timeout=10)
-            if response.status_code == 200:
-                logger.info("Самопинг успешен")
+            # 404 - это нормально, главное что приложение отвечает
+            if response.status_code in [200, 404]:
+                logger.info("Самопинг успешен - приложение активно")
             else:
                 logger.warning(f"Самопинг неуспешен: {response.status_code}")
+                
+        except requests.exceptions.ConnectionError:
+            logger.warning("Ошибка соединения при самопинге")
+        except requests.exceptions.Timeout:
+            logger.warning("Таймаут при самопинге")
         except Exception as e:
             logger.error(f"Ошибка самопинга: {e}")
         
-        # Пингуем каждые 10 минут (600 секунд)
-        await asyncio.sleep(600)
+        # Пингуем каждые 5 минут (300 секунд) - чаще для надежности
+        await asyncio.sleep(300)
 
 # ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 def get_user_data(user_id):
@@ -450,4 +457,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
