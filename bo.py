@@ -6,7 +6,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 # ===== НАСТРОЙКИ =====
-TOKEN = "8252590248:AAFv6YQne-sLihPAwtzC31YZ9iwZBJR4s8w"
+TOKEN = "88268250061:AAEAVFkU47ISRsKYpJ4IjKlpcrGEXyJxd3Y"
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -439,4 +439,5 @@ def main():
     application.run_polling()
 
 if __name__ == "__main__":
+
     main()
